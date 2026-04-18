@@ -10,3 +10,6 @@ target/
 
 # Local env config
 .env
+
+# Ouput files
+output_files/
