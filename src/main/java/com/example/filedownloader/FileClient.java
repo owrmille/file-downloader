@@ -47,4 +47,24 @@ public class FileClient {
             throw new IllegalStateException(method + " failed with status: " + status);
         }
     }
+
+    public byte[] downloadChunk(String url, Chunk chunk) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .header("Range", chunk.toRangeHeader())
+                .GET()
+                .build();
+        HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+        if (response.statusCode() != 206) {
+            throw new IllegalStateException("Expected 206 for range request, got " + response.statusCode());
+        }
+
+        byte[] body = response.body();
+        if (body.length != chunk.length()) {
+            throw new IllegalStateException("Dowloaded (chunk) length does not match expected length. expected="
+                    + chunk.length() + ", actual=" + body.length);
+        }
+
+        return body;
+    }
 }
