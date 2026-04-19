@@ -41,6 +41,12 @@ Java file downloader that fetches a file from an HTTP server using byte ranges, 
 2. Start local HTTP server:
 
 ```bash
+docker run -d --rm --name fd-httpd -p 8080:80 -v /absolute/path/to/file-downloader/test_files:/usr/local/apache2/htdocs/ httpd:latest
+```
+
+Or with Make:
+
+```bash
 make server-up
 ```
 
@@ -79,7 +85,7 @@ make run INPUT_FILE=groceries.txt
 ### Run with custom chunk size and thread count
 
 ```bash
-make run INPUT_FILE=medium.txt CHUNK_SIZE=262144 THREAD_COUNT=4
+make run INPUT_FILE=random.txt CHUNK_SIZE=262144 THREAD_COUNT=4
 ```
 
 Notes:
