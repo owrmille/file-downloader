@@ -29,6 +29,8 @@ class FileClientTest {
         server.createContext("/ok", this::handleOk);
         server.createContext("/missing-length", this::handleMissingLength);
         server.createContext("/get-404", this::handleGet404);
+        server.createContext("/range-returns-200", this::handleRangeReturns200);
+        server.createContext("/range-length-mismatch", this::handleRangeLengthMismatch);
         server.start();
     }
 
@@ -71,6 +73,22 @@ class FileClientTest {
     @Test
     void getFailsOnNon200Status() {
         assertThrows(IllegalStateException.class, () -> fileClient.get(url("/get-404")));
+    }
+
+    @Test
+    void downloadChunkFailsWhenServerReturns200ForRangeRequest() {
+        Chunk chunk = new Chunk(0, 4);
+
+        assertThrows(IllegalStateException.class,
+                () -> fileClient.downloadChunk(url("/range-returns-200"), chunk));
+    }
+
+    @Test
+    void downloadChunkFailsWhenReturnedBodyLengthDoesNotMatchRangeLength() {
+        Chunk chunk = new Chunk(0, 4);
+
+        assertThrows(IllegalStateException.class,
+                () -> fileClient.downloadChunk(url("/range-length-mismatch"), chunk));
     }
 
     private String url(String path) {
@@ -136,6 +154,35 @@ class FileClientTest {
         }
 
         exchange.sendResponseHeaders(200, -1);
+        exchange.close();
+    }
+
+    private void handleRangeReturns200(HttpExchange exchange) throws IOException {
+        if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
+            exchange.getResponseHeaders().set("Content-Length", String.valueOf(content.length));
+            exchange.sendResponseHeaders(200, content.length);
+            exchange.getResponseBody().write(content);
+            exchange.close();
+            return;
+        }
+
+        exchange.sendResponseHeaders(405, -1);
+        exchange.close();
+    }
+
+    private void handleRangeLengthMismatch(HttpExchange exchange) throws IOException {
+        if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            byte[] mismatched = new byte[] {1, 2}; // shorter than requested in test
+            exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
+            exchange.getResponseHeaders().set("Content-Length", String.valueOf(mismatched.length));
+            exchange.sendResponseHeaders(206, mismatched.length);
+            exchange.getResponseBody().write(mismatched);
+            exchange.close();
+            return;
+        }
+
+        exchange.sendResponseHeaders(405, -1);
         exchange.close();
     }
 

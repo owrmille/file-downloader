@@ -61,6 +61,45 @@ class FileDownloaderTest {
         assertTrue(ex.getMessage().contains("Downloaded length does not match Content-Length"));
     }
 
+    @Test
+    void downloadFailsWhenThreadCountIsNotPositive() {
+        byte[] body = "hello".getBytes();
+        StubFileClient fileClient = new StubFileClient(new HeadData(body.length, "bytes"), body);
+        CapturingFileStore fileStore = new CapturingFileStore();
+        ChunkSplitter chunkSplitter = new ChunkSplitter();
+        FileDownloader downloader = new FileDownloader(fileClient, fileStore, chunkSplitter);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> downloader.download("http://localhost:8080/test.txt", Path.of("out.txt"), 1024, 0));
+        assertTrue(ex.getMessage().contains("Thread count must be > 0"));
+    }
+
+    @Test
+    void downloadFailsWhenChunkSizeIsNotPositive() {
+        byte[] body = "hello".getBytes();
+        StubFileClient fileClient = new StubFileClient(new HeadData(body.length, "bytes"), body);
+        CapturingFileStore fileStore = new CapturingFileStore();
+        ChunkSplitter chunkSplitter = new ChunkSplitter();
+        FileDownloader downloader = new FileDownloader(fileClient, fileStore, chunkSplitter);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> downloader.download("http://localhost:8080/test.txt", Path.of("out.txt"), 0, 2));
+        assertTrue(ex.getMessage().contains("Chunk size must be > 0"));
+    }
+
+    @Test
+    void downloadFailsForZeroLengthContent() {
+        byte[] body = new byte[0];
+        StubFileClient fileClient = new StubFileClient(new HeadData(0, "bytes"), body);
+        CapturingFileStore fileStore = new CapturingFileStore();
+        ChunkSplitter chunkSplitter = new ChunkSplitter();
+        FileDownloader downloader = new FileDownloader(fileClient, fileStore, chunkSplitter);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> downloader.download("http://localhost:8080/empty", Path.of("out.txt"), 1024, 2));
+        assertTrue(ex.getMessage().contains("Content length must be > 0"));
+    }
+
     private static class StubFileClient extends FileClient {
         private final HeadData headData;
         private final byte[] body;
