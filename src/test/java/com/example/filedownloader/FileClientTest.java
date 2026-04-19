@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,6 +55,15 @@ class FileClientTest {
     }
 
     @Test
+    void downloadChunkReturnsOnlyRequestedRange() throws Exception {
+        Chunk chunk = new Chunk(2, 6);
+
+        byte[] downloaded = fileClient.downloadChunk(url("/ok"), chunk);
+
+        assertArrayEquals(Arrays.copyOfRange(content, 2, 7), downloaded);
+    }
+
+    @Test
     void headFailsWhenContentLengthIsMissing() {
         assertThrows(IllegalStateException.class, () -> fileClient.head(url("/missing-length")));
     }
@@ -79,6 +89,21 @@ class FileClientTest {
         }
 
         if ("GET".equalsIgnoreCase(method)) {
+            String rangeHeader = exchange.getRequestHeaders().getFirst("Range");
+            if (rangeHeader != null) {
+                Chunk chunk = parseRange(rangeHeader);
+                byte[] chunkData = Arrays.copyOfRange(content, (int) chunk.start(), (int) chunk.end() + 1);
+
+                exchange.getResponseHeaders().set("Content-Length", String.valueOf(chunkData.length));
+                exchange.getResponseHeaders().set(
+                        "Content-Range",
+                        "bytes " + chunk.start() + "-" + chunk.end() + "/" + content.length);
+                exchange.sendResponseHeaders(206, chunkData.length);
+                exchange.getResponseBody().write(chunkData);
+                exchange.close();
+                return;
+            }
+
             exchange.sendResponseHeaders(200, content.length);
             exchange.getResponseBody().write(content);
             exchange.close();
@@ -112,5 +137,20 @@ class FileClientTest {
 
         exchange.sendResponseHeaders(200, -1);
         exchange.close();
+    }
+
+    private Chunk parseRange(String rangeHeader) {
+        if (rangeHeader == null || !rangeHeader.startsWith("bytes=")) {
+            throw new IllegalArgumentException("Invalid Range header: " + rangeHeader);
+        }
+
+        String[] bounds = rangeHeader.substring("bytes=".length()).split("-");
+        if (bounds.length != 2) {
+            throw new IllegalArgumentException("Invalid Range header: " + rangeHeader);
+        }
+
+        long start = Long.parseLong(bounds[0]);
+        long end = Long.parseLong(bounds[1]);
+        return new Chunk(start, end);
     }
 }
