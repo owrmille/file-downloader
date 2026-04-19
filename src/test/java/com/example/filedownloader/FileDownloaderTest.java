@@ -24,7 +24,8 @@ class FileDownloaderTest {
 
         Path outputPath = Path.of("output_files/test.txt");
         int chunkSize = 1024;
-        downloader.download("http://localhost:8080/test.txt", outputPath, chunkSize);
+        int threadCount = 2;
+        downloader.download("http://localhost:8080/test.txt", outputPath, chunkSize, threadCount);
 
         assertEquals(outputPath, fileStore.writtenPath);
         assertArrayEquals(body, fileStore.writtenBytes);
@@ -39,8 +40,9 @@ class FileDownloaderTest {
         FileDownloader downloader = new FileDownloader(fileClient, fileStore, chunkSplitter);
 
         int chunkSize = 1024;
+        int threadCount = 2;
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> downloader.download("http://localhost:8080/test.txt", Path.of("out.txt"), chunkSize));
+                () -> downloader.download("http://localhost:8080/test.txt", Path.of("out.txt"), chunkSize, threadCount));
         assertTrue(ex.getMessage().contains("Accept-Ranges"));
     }
 
@@ -53,8 +55,9 @@ class FileDownloaderTest {
         FileDownloader downloader = new FileDownloader(fileClient, fileStore, chunkSplitter);
 
         int chunkSize = 1024;
+        int threadCount = 2;
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> downloader.download("http://localhost:8080/test.txt", Path.of("out.txt"), chunkSize));
+                () -> downloader.download("http://localhost:8080/test.txt", Path.of("out.txt"), chunkSize, threadCount));
         assertTrue(ex.getMessage().contains("Downloaded length does not match Content-Length"));
     }
 
