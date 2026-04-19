@@ -16,9 +16,11 @@ public class FileDownloaderApp {
 
         FileClient fileClient = new FileClient();
         FileStore fileStore = new FileStore();
-        FileDownloader downloader = new FileDownloader(fileClient, fileStore);
+        ChunkSplitter chunkSplitter = new ChunkSplitter();
+        FileDownloader downloader = new FileDownloader(fileClient, fileStore, chunkSplitter);
 
-        downloader.download(url, outputPath);
+        int chunkSize = 1024;  // TODO: temporary choice -> finalize decision later
+        downloader.download(url, outputPath, chunkSize);
 
         System.out.println("File downloaded to: " + outputPath.toAbsolutePath().normalize());
     }
