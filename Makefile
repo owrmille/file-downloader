@@ -9,7 +9,7 @@ CONTAINER_NAME ?= fd-httpd
 IMAGE ?= httpd:latest
 PORT ?= 8080
 
-.PHONY: help server-up server-down server-logs server-status port-usage test clean
+.PHONY: help server-up server-down server-logs server-status port-usage run test clean
 
 help:
 	@echo "Targets:"
@@ -18,6 +18,7 @@ help:
 	@echo "  make server-logs    Follow Apache container logs"
 	@echo "  make server-status  Show whether container is running"
 	@echo "  make port-usage     Show processes using configured PORT"
+	@echo "  make run FILE=... [OUT=...]  Run FileDownloaderApp with args"
 	@echo "  make test           Run Maven tests"
 	@echo "  make clean          Run Maven clean"
 
@@ -39,6 +40,11 @@ server-status:
 
 port-usage:
 	@lsof -i :$(PORT) || echo "No process is using port $(PORT)"
+
+run:
+	@mvn -q exec:java \
+		-Dexec.mainClass="com.example.filedownloader.FileDownloaderApp" \
+		-Dexec.args="$(or $(FILE),groceries.txt) $(or $(OUT),./output_files/$(or $(FILE),groceries.txt))"
 
 test:
 	mvn test
