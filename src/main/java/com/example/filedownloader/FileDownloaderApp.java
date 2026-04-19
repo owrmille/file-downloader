@@ -22,20 +22,4 @@ public class FileDownloaderApp {
 
         System.out.println("File downloaded to: " + outputPath.toAbsolutePath().normalize());
     }
-
-//    public static void main(String[] args) throws Exception {
-//        String baseUrl = "http://localhost:8080/";
-//        String fileName = args.length > 0 ? args[0] : "groceries.txt";
-//        String url = baseUrl + fileName;
-//
-//        FileClient fileClient = new FileClient();
-//
-//        Chunk chunk = new Chunk(0, 15); // first 16 bytes
-//        byte[] bytes = fileClient.downloadChunk(url, chunk);
-//
-//        System.out.println("Requested range: " + chunk.toRangeHeader());
-//        System.out.println("Expected length: " + chunk.length());
-//        System.out.println("Downloaded length: " + bytes.length);
-//        System.out.println("As text: " + new String(bytes));
-//    }
 }
