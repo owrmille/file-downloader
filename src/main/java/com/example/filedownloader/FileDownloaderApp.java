@@ -20,7 +20,8 @@ public class FileDownloaderApp {
         FileDownloader downloader = new FileDownloader(fileClient, fileStore, chunkSplitter);
 
         int chunkSize = 1024;  // TODO: temporary choice -> finalize decision later
-        downloader.download(url, outputPath, chunkSize);
+        int threadCount = 4;   // TODO: temporary choice -> finalize decision later
+        downloader.download(url, outputPath, chunkSize, threadCount);
 
         System.out.println("File downloaded to: " + outputPath.toAbsolutePath().normalize());
     }
