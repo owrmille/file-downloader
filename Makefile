@@ -42,7 +42,7 @@ port-usage:
 	@lsof -i :$(PORT) || echo "No process is using port $(PORT)"
 
 run:
-	@mvn -q exec:java \
+	@mvn -q compile exec:java \
 		-Dexec.mainClass="com.example.filedownloader.FileDownloaderApp" \
 		-Dexec.args="$(or $(FILE),groceries.txt) $(or $(OUT),./output_files/$(or $(FILE),groceries.txt))"
 
